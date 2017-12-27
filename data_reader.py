@@ -19,12 +19,14 @@ def read_file(contents,labels,filename,label):
     with open(filename,'r',encoding='utf-8',errors='ignore') as f:
         data=json.load(f)
         for item in data:
-            text=word_tokenize(item['text'].lower())
+            text=item['text'].lower()
+            text=word_tokenize(text)
+            text = ['"' if x == '``' else x for x in text]
             contents.append(text)
             labels.append(label)
 
 
-def get_data(funny_file,unfunny_file):
+def split_data(funny_file,unfunny_file):
     contents,labels=[],[]
     read_file(contents,labels,funny_file,1)
     read_file(contents,labels,unfunny_file,0)
@@ -47,11 +49,11 @@ def get_data(funny_file,unfunny_file):
 def write_data(contents,labels,file):
     with open(file,'w',encoding='utf-8',errors='ignore') as f:
         for i in range(len(contents)):
-            f.write(str(labels[i])+'\t'+str(contents[i])+'\n')
-# train_contents,train_labels,val_contents,val_labels,test_contents,test_labels=get_data(funny_dir,unfunny_dir)
-# write_data(train_contents,train_labels,os.path.join(data_path,'train.txt'))
+            f.write(str(labels[i])+'\t'+json.dumps(contents[i])+'\n')
+train_contents,train_labels,val_contents,val_labels,test_contents,test_labels=split_data(funny_dir,unfunny_dir)
+write_data(train_contents,train_labels,os.path.join(data_path,'train.txt'))
 # write_data(val_contents,val_labels,os.path.join(data_path,'val.txt'))
-# write_data(test_contents,test_labels,os.path.join(data_path,'test.txt'))
+write_data(test_contents,test_labels,os.path.join(data_path,'test.txt'))
 
 #get data
 def read_data(file):
@@ -59,14 +61,12 @@ def read_data(file):
         contents,labels=[],[]
         lines=f.readlines()
         for line in lines:
+            # print(line.split('\t'))
             label,content=line.split('\t')
             content=content.replace('\n','')
             labels.append(int(label))
-            contents.append(content)
+            contents.append(json.loads(content))
         return contents,labels
-
-#contents,labels=read_data(os.path.join(data_path,'val.txt'))
-
 
 # train_contents,_,_,_,_,_=get_data(funny_dir,unfunny_dir)
 # for i in train_contents:
@@ -74,7 +74,7 @@ def read_data(file):
 
 # 取前5000词频占0.9351339526181685
 def build_vocab(vocab_dir,vocab_size=5000):
-    train_data,_,_,_,_,_=get_data(funny_dir,unfunny_dir)
+    train_data,_,_,_,_,_=split_data(funny_dir,unfunny_dir)
     words=[]
     for content in train_data:
         words.extend(content)
@@ -91,7 +91,7 @@ def build_vocab(vocab_dir,vocab_size=5000):
                 f.write(word+'\n')
             except:
                 pass
-# build_vocab(vocab_dir)
+build_vocab(vocab_dir)
 
 def read_vocab(vocab_dir):
     words=open(vocab_dir,'r',encoding='utf-8',errors='ignore').read().strip().split('\n')
@@ -111,12 +111,9 @@ def to_id(data,word_to_id):
 def to_words(content,words):
     return ''.join(words[x] for x in content)
 
-def process_file(word_to_id):
-    train_contents,train_labels,val_contents,val_labels,test_contents,test_labels=get_data(funny_dir,unfunny_dir)
-    train_contents=to_id(train_contents,word_to_id)
-    val_contents=to_id(val_contents,word_to_id)
-    test_contents=to_id(test_contents,word_to_id)
-    return train_contents,train_labels,val_contents,val_labels,test_contents,test_labels
+def file_to_id(word_to_id,content):
+    data=to_id(content,word_to_id)
+    return data
 
 
 def batch_iter(x,y,batch_size,num_classes):
@@ -137,3 +134,21 @@ def batch_iter(x,y,batch_size,num_classes):
         # print(y[start_id:end_id])
         y[start_id:end_id]=kr.utils.to_categorical(y[start_id:end_id],num_classes)
         yield x[start_id:end_id],y[start_id:end_id]
+
+
+_,word_to_id=read_vocab(vocab_dir)
+batch_size=16
+num_classes=2
+#
+def get_data(file,word_to_id):
+    inputs,labels=read_data(file)
+    inputs=file_to_id(word_to_id,inputs)
+    return inputs,labels
+
+train_dir=os.path.join(data_path,'train.txt')
+train_inputs,train_labels=get_data(train_dir,word_to_id)
+train_batch=batch_iter(train_inputs,train_labels,batch_size,num_classes)
+for content,label in train_batch:
+    print(label)
+    print(content)
+    print('---------------')
