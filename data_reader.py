@@ -6,22 +6,23 @@ import os
 import json
 from nltk.tokenize import word_tokenize
 
-data_path="E:\\data\\our_data\\"
+# import nltk
+# nltk.download('punkt')
+
+data_path="../data/our_data"
 funny_dir=os.path.join(data_path,'funny.json')
 unfunny_dir=os.path.join(data_path,'nofunny.json')
 vocab_dir=os.path.join(data_path,'vocab.txt')
 
 
 def read_file(contents,labels,filename,label):
-    with open(filename,'r') as f:
+    with open(filename,'r',encoding='utf-8',errors='ignore') as f:
         data=json.load(f)
         for item in data:
-            try:
-                text=word_tokenize(item['text'].lower())
-                contents.append(text)
-                labels.append(label)
-            except:
-                pass
+            text=word_tokenize(item['text'].lower())
+            contents.append(text)
+            labels.append(label)
+
 
 def get_data(funny_file,unfunny_file):
     contents,labels=[],[]
@@ -40,8 +41,32 @@ def get_data(funny_file,unfunny_file):
     val_labels=labels_shuffle[index:index2]
     test_contents=contents_shuffle[index2:]
     test_labels=labels_shuffle[index2:]
-    print(len(contents_shuffle),len(train_contents),len(val_contents),len(test_contents))
+    # print(len(contents_shuffle),len(train_contents),len(val_contents),len(test_contents))
     return train_contents,train_labels,val_contents,val_labels,test_contents,test_labels
+
+def write_data(contents,labels,file):
+    with open(file,'w',encoding='utf-8',errors='ignore') as f:
+        for i in range(len(contents)):
+            f.write(str(labels[i])+'\t'+str(contents[i])+'\n')
+# train_contents,train_labels,val_contents,val_labels,test_contents,test_labels=get_data(funny_dir,unfunny_dir)
+# write_data(train_contents,train_labels,os.path.join(data_path,'train.txt'))
+# write_data(val_contents,val_labels,os.path.join(data_path,'val.txt'))
+# write_data(test_contents,test_labels,os.path.join(data_path,'test.txt'))
+
+#get data
+def read_data(file):
+    with open(file,'r',encoding='utf-8',errors='ignore') as f:
+        contents,labels=[],[]
+        lines=f.readlines()
+        for line in lines:
+            label,content=line.split('\t')
+            content=content.replace('\n','')
+            labels.append(int(label))
+            contents.append(content)
+        return contents,labels
+
+#contents,labels=read_data(os.path.join(data_path,'val.txt'))
+
 
 # train_contents,_,_,_,_,_=get_data(funny_dir,unfunny_dir)
 # for i in train_contents:
@@ -66,7 +91,6 @@ def build_vocab(vocab_dir,vocab_size=5000):
                 f.write(word+'\n')
             except:
                 pass
-
 # build_vocab(vocab_dir)
 
 def read_vocab(vocab_dir):
@@ -113,5 +137,3 @@ def batch_iter(x,y,batch_size,num_classes):
         # print(y[start_id:end_id])
         y[start_id:end_id]=kr.utils.to_categorical(y[start_id:end_id],num_classes)
         yield x[start_id:end_id],y[start_id:end_id]
-
-
