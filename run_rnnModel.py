@@ -28,7 +28,7 @@ def evaluate(sess,x_,y_):
     eval_batch=batch_iter(x_,y_,config.batch_size,config.num_classes)
     total_loss=0.0
     total_acc=0.0
-    for x_batch,y_batch in eval_batch:
+    for x_batch,y_batch,_ in eval_batch:
         batch_len=len(x_batch)
         feed_dict=feed_data(x_batch,y_batch,1.0)
         loss,acc=sess.run([model.loss,model.acc],feed_dict=feed_dict)
@@ -63,7 +63,7 @@ def train():
         for epoch in range(config.num_epochs):
             print('Epoch:',epoch+1)
             train_batch=batch_iter(train_inputs,train_labels,config.batch_size,config.num_classes)
-            for x_batch,y_batch in train_batch:
+            for x_batch,y_batch,_ in train_batch:
                 feed_dict=feed_data(x_batch,y_batch,config.dropout_keep_prob)
                 if total_batch%config.save_per_batch==0:
                     s=sess.run(merged_summary,feed_dict=feed_dict)
@@ -85,12 +85,12 @@ def train():
                 sess.run(model.optimizer,feed_dict=feed_dict)
                 total_batch+=1
 
-                if total_batch-last_improved>required_improvement:
-                    print('No optimization dor a long time, stop training...')
-                    flag=True
-                    break
-            if flag:
-                break
+            #     if total_batch-last_improved>required_improvement:
+            #         print('No optimization dor a long time, stop training...')
+            #         flag=True
+            #         break
+            # if flag:
+            #     break
 
 def test():
     Config = tf.ConfigProto()
