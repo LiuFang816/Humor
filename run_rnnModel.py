@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import tensorflow as tf
 from rnnModel import *
-from humor.humor_data_reader import *
+from data_reader import *
 from sklearn import metrics
 import sys
 import time
@@ -25,7 +25,7 @@ def feed_data(x_batch,y_batch,keep_prob):
 
 def evaluate(sess,x_,y_):
     data_len=len(x_)
-    eval_batch=batch_iter(x_,y_,config.batch_size)
+    eval_batch=batch_iter(x_,y_,config.batch_size,config.num_classes)
     total_loss=0.0
     total_acc=0.0
     for x_batch,y_batch in eval_batch:
@@ -62,7 +62,7 @@ def train():
         flag=False
         for epoch in range(config.num_epochs):
             print('Epoch:',epoch+1)
-            train_batch=batch_iter(train_contents,train_labels,config.batch_size)
+            train_batch=batch_iter(train_inputs,train_labels,config.batch_size,config.num_classes)
             for x_batch,y_batch in train_batch:
                 feed_dict=feed_data(x_batch,y_batch,config.dropout_keep_prob)
                 if total_batch%config.save_per_batch==0:
@@ -70,7 +70,7 @@ def train():
                     writer.add_summary(s,total_batch)
                 if total_batch%config.print_per_batch==0:
                     loss,acc=sess.run([model.loss,model.acc],feed_dict=feed_dict)
-                    loss_val,acc_val=evaluate(sess,val_contents,val_labels)
+                    loss_val,acc_val=evaluate(sess,val_inputs,val_labels)
                     if acc_val>best_eval_acc:
                         best_eval_acc=acc_val
                         last_improved=total_batch
@@ -99,17 +99,17 @@ def test():
         sess.run(tf.global_variables_initializer())
         saver=tf.train.Saver()
         saver.restore(sess,save_path)
-        test_loss,test_acc=evaluate(sess,test_contents,test_labels)
-        num_batch=int((len(test_contents)-1)/config.batch_size)+1
+        test_loss,test_acc=evaluate(sess,test_inputs,test_labels)
+        num_batch=int((len(test_inputs)-1)/config.batch_size)+1
         msg='Test Loss:{0:>6.2}, Test Acc:{1:>7.2%}'
         print(msg.format(test_loss,test_acc))
         y_test_cls=np.argmax(test_labels,1)
-        y_pred_cls=np.zeros(shape=len(test_contents),dtype=np.int32)
+        y_pred_cls=np.zeros(shape=len(test_inputs),dtype=np.int32)
         for i in range(num_batch):
             start_id=i*num_batch
-            end_id=min((i+1)*config.batch_size,len(test_contents))
+            end_id=min((i+1)*config.batch_size,len(test_inputs))
             feed_dict={
-                model.input:test_contents[start_id:end_id],
+                model.input:test_inputs[start_id:end_id],
                 model.keep_prob:1.0
             }
             y_pred_cls[start_id:end_id]=sess.run(model.predict_class,feed_dict)
@@ -131,7 +131,11 @@ if __name__ == '__main__':
         print('Build vocabulary finished...')
     words,word_to_id=read_vocab(vocab_dir)
     model=TextRNN(config)
-    train_contents,train_labels,val_contents,val_labels,test_contents,test_labels=process_file(word_to_id)
+    _,word_to_id=read_vocab(vocab_dir)
+    train_inputs,train_labels=get_data(train_dir,word_to_id)
+    val_inputs,val_labels=get_data(val_dir,word_to_id)
+    test_inputs,test_labels=get_data(test_dir,word_to_id)
+
     if MODE=='train':
         train()
     else:
