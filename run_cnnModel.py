@@ -36,7 +36,7 @@ def evaluate(sess,x_,y_):
     return total_loss/data_len,total_acc/data_len
 
 def train():
-    tensorboard_dir='tensorboard/textrnn'
+    tensorboard_dir='tensorboard/textcnn'
     if not os.path.exists(tensorboard_dir):
         os.makedirs(tensorboard_dir)
     tf.summary.scalar('loss',model.loss)
@@ -84,12 +84,12 @@ def train():
                 sess.run(model.optimizer,feed_dict=feed_dict)
                 total_batch+=1
 
-                if total_batch-last_improved>required_improvement:
-                    print('No optimization dor a long time, stop training...')
-                    flag=True
-                    break
-            if flag:
-                break
+            #     if total_batch-last_improved>required_improvement:
+            #         print('No optimization dor a long time, stop training...')
+            #         flag=True
+            #         break
+            # if flag:
+            #     break
 
 def test():
     Config = tf.ConfigProto()

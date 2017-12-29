@@ -3,16 +3,16 @@ import tensorflow as tf
 class CNNConfig(object):
     filter_sizes=[3,4,5]
     num_filters=128
-    embedding_size=64
+    embedding_size=128
     seq_length=600
-    num_classes=10
+    num_classes=2
     vocab_size=5000
     kernel_size=5
-    hidden_size=128
     dropout_keep_prob=0.5
+    l2_reg_lambda=0.8
     learning_rate=1e-3
     batch_size=32
-    num_epochs=10
+    num_epochs=50
     print_per_batch=100
     save_per_batch=10
 
@@ -22,6 +22,7 @@ class TextCNN(object):
         self.input=tf.placeholder(tf.int32,[None,None],name='input')
         self.label=tf.placeholder(tf.int32,[None,self.config.num_classes])
         self.keep_prob=tf.placeholder(tf.float32,name='keep_prob')
+        self.l2_loss=tf.constant(0.0)
         self.cnn()
     def cnn(self):
         with tf.device('/cpu:0'):
@@ -51,12 +52,14 @@ class TextCNN(object):
             with tf.name_scope('output'):
                 W=tf.get_variable('W',shape=[num_filter_total,self.config.num_classes],initializer=tf.contrib.layers.xavier_initializer())
                 b=tf.Variable(tf.constant(0.1,shape=[self.config.num_classes]),name='b')
+                self.l2_loss+=tf.nn.l2_loss(W)
+                self.l2_loss+=tf.nn.l2_loss(b)
                 self.scores=tf.nn.xw_plus_b(self.h_drop,W,b,name='scores')
                 self.predictions=tf.argmax(self.scores,1,name='predictions')
 
             with tf.name_scope('loss'):
                 losses=tf.nn.softmax_cross_entropy_with_logits(logits=self.scores,labels=self.label)
-                self.loss=tf.reduce_mean(losses)
+                self.loss=tf.reduce_mean(losses)+self.config.l2_reg_lambda*self.l2_loss
                 self.optimizer=tf.train.AdamOptimizer(learning_rate=self.config.learning_rate).minimize(self.loss)
 
             with tf.name_scope('Accuracy'):

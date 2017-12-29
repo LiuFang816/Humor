@@ -3,13 +3,14 @@ import tensorflow as tf
 class RNNConfig(object):
     embedding_size=128
     num_classes=2
+    seq_length=600
     vocab_size=5000
-    num_layer=2
-    hidden_size=128
-    rnn='lstm'
-    dropout_keep_prob=0.8
+    num_layer=1
+    hidden_size=256
+    rnn='gru'
+    dropout_keep_prob=1
     learning_rate=1e-3
-    batch_size=64
+    batch_size=32
     num_epochs=50
     print_per_batch=100
     save_per_batch=10
