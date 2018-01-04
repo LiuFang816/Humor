@@ -6,8 +6,6 @@ import os
 import json
 from nltk.tokenize import word_tokenize
 
-# import nltk
-# nltk.download('punkt')
 
 data_path="../data/our_data"
 funny_dir=os.path.join(data_path,'funny.json')
@@ -118,8 +116,14 @@ def file_to_id(word_to_id,content):
     data=to_id(content,word_to_id)
     return data
 
+def get_data(file,word_to_id,seq_length,num_classes):
+    inputs,labels=read_data(file)
+    inputs=file_to_id(word_to_id,inputs)
+    inputs=kr.preprocessing.sequence.pad_sequences(inputs,seq_length)
+    labels=kr.utils.to_categorical(labels,num_classes)
+    return inputs,labels
 
-def batch_iter(x,y,batch_size,num_classes):
+def batch_iter(x,y,batch_size):
     data_len=len(x)
     num_batch=int((data_len-1)/batch_size)+1
 
@@ -128,20 +132,9 @@ def batch_iter(x,y,batch_size,num_classes):
         end_id=min((i+1)*batch_size,data_len)
         if end_id-start_id<batch_size:
             break
-        max_seq_length=0
-        for i in range(start_id,end_id):
-            if len(x[i])>max_seq_length:
-                max_seq_length=len(x[i])
-        # print(x[start_id:end_id])
-        x[start_id:end_id]=kr.preprocessing.sequence.pad_sequences(x[start_id:end_id],max_seq_length)
-        # print(y[start_id:end_id])
-        y[start_id:end_id]=kr.utils.to_categorical(y[start_id:end_id],num_classes)
-        yield x[start_id:end_id],y[start_id:end_id],max_seq_length
+        yield x[start_id:end_id],y[start_id:end_id]
 
-def get_data(file,word_to_id):
-    inputs,labels=read_data(file)
-    inputs=file_to_id(word_to_id,inputs)
-    return inputs,labels
+
 
 # _,word_to_id=read_vocab(vocab_dir)
 #

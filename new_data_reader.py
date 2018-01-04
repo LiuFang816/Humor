@@ -6,6 +6,8 @@ import os
 import json
 from nltk.tokenize import word_tokenize
 
+# import nltk
+# nltk.download('punkt')
 
 data_path="../data/our_data"
 funny_dir=os.path.join(data_path,'funny.json')
@@ -51,10 +53,10 @@ def write_data(contents,labels,file):
     with open(file,'w',encoding='utf-8',errors='ignore') as f:
         for i in range(len(contents)):
             f.write(str(labels[i])+'\t'+json.dumps(contents[i])+'\n')
-# train_contents,train_labels,val_contents,val_labels,test_contents,test_labels=split_data(funny_dir,unfunny_dir)
-# write_data(train_contents,train_labels,os.path.join(data_path,'train.txt'))
-# write_data(val_contents,val_labels,os.path.join(data_path,'val.txt'))
-# write_data(test_contents,test_labels,os.path.join(data_path,'test.txt'))
+train_contents,train_labels,val_contents,val_labels,test_contents,test_labels=split_data(funny_dir,unfunny_dir)
+write_data(train_contents,train_labels,os.path.join(data_path,'train.txt'))
+write_data(val_contents,val_labels,os.path.join(data_path,'val.txt'))
+write_data(test_contents,test_labels,os.path.join(data_path,'test.txt'))
 
 #get data
 def read_data(file):
@@ -92,7 +94,7 @@ def build_vocab(vocab_dir,vocab_size=5000):
                 f.write(word+'\n')
             except:
                 pass
-# build_vocab(vocab_dir)
+build_vocab(vocab_dir)
 
 def read_vocab(vocab_dir):
     words=open(vocab_dir,'r',encoding='utf-8',errors='ignore').read().strip().split('\n')
@@ -116,14 +118,8 @@ def file_to_id(word_to_id,content):
     data=to_id(content,word_to_id)
     return data
 
-def get_data(file,word_to_id,seq_length,num_classes):
-    inputs,labels=read_data(file)
-    inputs=file_to_id(word_to_id,inputs)
-    inputs=kr.preprocessing.sequence.pad_sequences(inputs,seq_length)
-    labels=kr.utils.to_categorical(labels,num_classes)
-    return inputs,labels
 
-def batch_iter(x,y,batch_size):
+def batch_iter(x,y,batch_size,num_classes):
     data_len=len(x)
     num_batch=int((data_len-1)/batch_size)+1
 
@@ -132,9 +128,20 @@ def batch_iter(x,y,batch_size):
         end_id=min((i+1)*batch_size,data_len)
         if end_id-start_id<batch_size:
             break
-        yield x[start_id:end_id],y[start_id:end_id]
+        max_seq_length=0
+        for i in range(start_id,end_id):
+            if len(x[i])>max_seq_length:
+                max_seq_length=len(x[i])
+        # print(x[start_id:end_id])
+        x[start_id:end_id]=kr.preprocessing.sequence.pad_sequences(x[start_id:end_id],max_seq_length)
+        # print(y[start_id:end_id])
+        y[start_id:end_id]=kr.utils.to_categorical(y[start_id:end_id],num_classes)
+        yield x[start_id:end_id],y[start_id:end_id],max_seq_length
 
-
+def get_data(file,word_to_id):
+    inputs,labels=read_data(file)
+    inputs=file_to_id(word_to_id,inputs)
+    return inputs,labels
 
 # _,word_to_id=read_vocab(vocab_dir)
 #

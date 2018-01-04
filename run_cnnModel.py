@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import tensorflow as tf
 from cnnModel import *
-from cnn_data_reader import *
+from data_reader import *
 from sklearn import metrics
 import time
 from datetime import timedelta

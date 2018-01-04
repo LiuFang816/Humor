@@ -2,16 +2,15 @@
 import tensorflow as tf
 class CNNConfig(object):
     filter_sizes=[3,4,5]
-    num_filters=128
+    num_filters=64
     embedding_size=128
-    seq_length=600
+    seq_length=150
     num_classes=2
     vocab_size=5000
-    kernel_size=5
     dropout_keep_prob=0.5
-    l2_reg_lambda=0.8
+    l2_reg_lambda=0.7
     learning_rate=1e-3
-    batch_size=32
+    batch_size=128
     num_epochs=50
     print_per_batch=100
     save_per_batch=10

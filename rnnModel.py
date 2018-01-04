@@ -6,9 +6,9 @@ class RNNConfig(object):
     seq_length=600
     vocab_size=5000
     num_layer=1
-    hidden_size=256
+    hidden_size=128
     rnn='gru'
-    dropout_keep_prob=1
+    dropout_keep_prob=1.0
     learning_rate=1e-3
     batch_size=32
     num_epochs=50
@@ -18,7 +18,7 @@ class RNNConfig(object):
 class TextRNN(object):
     def __init__(self,config):
         self.config=config
-        self.input=tf.placeholder(tf.int32,[None,None],name='input')
+        self.input=tf.placeholder(tf.int32,[None,config.seq_length],name='input')
         self.label=tf.placeholder(tf.int32,[None,self.config.num_classes])
         self.keep_prob=tf.placeholder(tf.float32,name='keep_prob')
         self.rnn()
@@ -27,7 +27,7 @@ class TextRNN(object):
             return tf.contrib.rnn.BasicLSTMCell(self.config.hidden_size,state_is_tuple=True)
         def gru_cell():
             return tf.contrib.rnn.GRUCell(self.config.hidden_size)
-        def drop_out():
+        def drop_out() :
             if self.config.rnn=='lstm':
                 cell=lstm_cell()
             else:
